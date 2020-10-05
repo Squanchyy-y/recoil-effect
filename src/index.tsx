@@ -2,8 +2,8 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import App from './App';
 import * as serviceWorker from './serviceWorker';
-import {RecoilRoot} from "recoil"
-import {BrowserRouter} from "react-router-dom";
+import { RecoilRoot } from "recoil"
+import { BrowserRouter } from "react-router-dom";
 
 
 ReactDOM.render(

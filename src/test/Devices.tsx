@@ -1,8 +1,8 @@
 import React from "react";
-import {$devices} from "./state";
-import {useRecoilEffectValue} from "recoil-effect"
+import { $devices } from "./state";
+import { useRecoilEffectValue } from "recoil-effect";
 
-const Devices = () => {
+const Devices: React.FC = () => {
     const devices = useRecoilEffectValue($devices);
 
     return (

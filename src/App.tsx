@@ -3,8 +3,9 @@ import {Route, Link} from "react-router-dom"
 import Devices from "./test/Devices";
 import Scanners from "test/Scanners"
 import Select from "test/Select"
+import NestedSelect from 'test/NestedSelect';
 
-function App() {
+const App: React.FC = () => {
   return (
     <div className="App">
       <div>
@@ -18,6 +19,10 @@ function App() {
         <br/>
         <Link to="/select">
           select
+        </Link>
+        <br/>
+        <Link to="/nested_select">
+          nested select
         </Link>
       </div>
 
@@ -35,6 +40,9 @@ function App() {
       </Route>
       <Route path="/select">
         <Select />
+      </Route>
+      <Route path="/nested_select">
+        <NestedSelect />
       </Route>
     </div>
   );
