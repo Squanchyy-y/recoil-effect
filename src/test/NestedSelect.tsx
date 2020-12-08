@@ -1,9 +1,9 @@
 import React from "react";
-import { useRecoilEffectValue } from "recoil-effect";
+import { useRecoilEffectsValue } from "recoil-effects";
 import { selectUnitsLength } from "./state";
 
 const NestedSelect: React.FC = () => {
-    const numUnits = useRecoilEffectValue(selectUnitsLength);
+    const numUnits = useRecoilEffectsValue(selectUnitsLength);
     return <div>Number of units: {numUnits}</div>;
 }
 

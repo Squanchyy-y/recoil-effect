@@ -1,9 +1,9 @@
 import React from "react";
-import { useRecoilEffectValue } from "recoil-effect";
+import { useRecoilEffectsValue } from "recoil-effects";
 import { $scanners } from "./state";
 
 const Scanners: React.FC = () => {
-    const scanners = useRecoilEffectValue($scanners);
+    const scanners = useRecoilEffectsValue($scanners);
     return <div>{scanners.map(({name}) => <div key={name}>{name}</div>)}</div>;
 }
 

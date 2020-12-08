@@ -1,9 +1,9 @@
 import React from "react";
 import { $devices } from "./state";
-import { useRecoilEffectValue } from "recoil-effect";
+import { useRecoilEffectsValue } from "recoil-effects";
 
 const Devices: React.FC = () => {
-    const devices = useRecoilEffectValue($devices);
+    const devices = useRecoilEffectsValue($devices);
 
     return (
         <div>

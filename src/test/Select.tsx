@@ -1,9 +1,9 @@
 import React from "react";
-import { useRecoilEffectValue } from "recoil-effect";
+import { useRecoilEffectsValue } from "recoil-effects";
 import { selectDevices } from "./state";
 
 const Select: React.FC = () => {
-    const devices = useRecoilEffectValue(selectDevices)
+    const devices = useRecoilEffectsValue(selectDevices)
     return <div>{devices.map(({name}) => <div key={name}>{name}</div>)}</div>
 }
 

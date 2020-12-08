@@ -1,6 +1,6 @@
-import {effectAtom, effectSelector} from "recoil-effect/index";
+import {effectsAtom, effectsSelector} from "recoil-effects/index";
 
-export const $devices = effectAtom<Array<Device>>({
+export const $devices = effectsAtom<Array<Device>>({
     key: `devices`,
     default: [],
     mount: () => {
@@ -11,7 +11,7 @@ export const $devices = effectAtom<Array<Device>>({
     }
 })
 
-export const $scanners = effectAtom<Array<Scanner>>({
+export const $scanners = effectsAtom<Array<Scanner>>({
     key: `scanners`,
     default: [],
     mount: () => {
@@ -22,7 +22,7 @@ export const $scanners = effectAtom<Array<Scanner>>({
     }
 });
 
-export const selectDevices = effectSelector<Array<Device | Scanner>>({
+export const selectDevices = effectsSelector<Array<Device | Scanner>>({
     key: `select_devices`,
     get: ({get}) => {
         const devices = get($devices);
@@ -31,7 +31,7 @@ export const selectDevices = effectSelector<Array<Device | Scanner>>({
     }
 })
 
-const selectDevicesLength = effectSelector<Number>({
+const selectDevicesLength = effectsSelector<Number>({
     key: `select_devices_length`,
     get: ({ get }) => {
         const devices = get($devices);
@@ -39,7 +39,7 @@ const selectDevicesLength = effectSelector<Number>({
     }
 });
 
-const selectScannersLength = effectSelector<Number>({
+const selectScannersLength = effectsSelector<Number>({
     key: `select_scanners_length`,
     get: ({ get }) => {
         const scanners = get($scanners);
@@ -47,7 +47,7 @@ const selectScannersLength = effectSelector<Number>({
     }
 });
 
-export const selectUnitsLength = effectSelector<Number>({
+export const selectUnitsLength = effectsSelector<Number>({
     key: `select_units_length`,
     get: ({ get }) => {
         const scannersLength = get(selectScannersLength);

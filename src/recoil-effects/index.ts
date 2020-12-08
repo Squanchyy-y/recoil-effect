@@ -1,13 +1,29 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import React from "react";
 import * as _r from "recoil";
+
+/**
+ * Implementation of lifecycle methods for Recoil atoms
+ * Recoil atoms are augmented with mount/unmount functions.
+ * Additionally, via AtomSubscriber, we globally track how many subscribers (a.k.a how many usages)
+ * of specific atom/selector are there.
+ * Every time a client tries to use an atom/selector:
+ *  - If client uses selector, atom dependencies of the selector are tracked
+ *  - If someone is already using an atom (subscriber count is > 0), only subscriber counter is incremented
+ *  - If there are no subscribers to atom, mount() function is called
+ * Every time a client stops using an atom/selector (when component using an atom/selector unmounts):
+ * - If client was the only subscriber to atom/selector, unmount() function is called after 2 second timeout
+ * - If subscriber count was > 0 after the client unsubscribed, subscriber counter decrements
+ * Associated issue: https://github.com/facebookexperimental/Recoil/issues/586
+ */
 
 /** 
   Interface for storing functions that are called when
   atom is mounted and unmounted, count of how many times the atom is mounted,
-  id of a timer which is used to define delay before unmount is called
+  id of a timer that defines delay before unmount function is called
 
-  Note: calling unmount after a delay is useful, when atom is unmounted and, then,
-  immediately mounted (for example, when current component unmounts
+  Note: delay before calling unmount is useful, when atom unmounts and, then,
+  immediately mounts (for example, when current component using the atom unmounts
   and new one, using same atom, mounts).
 */
 interface AtomSubscriber {
@@ -31,26 +47,24 @@ interface AtomEffectsOptions<T> {
 /* END */
 
 /* Extends Recoil AtomOptions interface to add mount and unmount functions */
-interface EffectAtomOptions<T> extends _r.AtomOptions<T> {
+interface EffectsAtomOptions<T> extends _r.AtomOptions<T> {
   mount: (updater: _r.SetterOrUpdater<T>) => void;
-  unmount: (updater: _r.SetterOrUpdater<T>) => void;
+  unmount?: (updater: _r.SetterOrUpdater<T>) => void;
   effects?: Array<(options: AtomEffectsOptions<T>) => void>;
 }
 
 /* Maps atom key to AtomSubscriber */
 const subscribersAtoms = new Map<string, AtomSubscriber>();
 
-/* Maps selector key to keys of all atoms it depends on */
+/* Maps selector key to keys of all atoms/selectors it depends on */
 const subscribersSelectors = new Map<string, Set<string>>();
 
 /**
   Looks up AtomSubscriber by atom key and checks if given atom is already mounted 
   If not, check if there is ongoing timer and clears the timer, otherwise, calls mount()
 */
-function handleMountAtom (key: string): boolean {
+const handleMountAtom = (key: string): boolean => {
   const subscriber = subscribersAtoms.get(key);
-
-  //   console.warn(`handleMountAtom`, subscriber, subscribersSelectors);
 
   if (subscriber) {
     if (subscriber.count === 0) {
@@ -73,10 +87,8 @@ function handleMountAtom (key: string): boolean {
   The timeout is necessary to avoid calling mount() and, then, unmount() 
   when component A using atom is unmounted, and component B also using the atom is mounted immediately after.
 */
-function handleUnmountAtom (key: string): boolean {
+const handleUnmountAtom = (key: string): boolean => {
   const subscriber = subscribersAtoms.get(key);
-
-  //   console.warn(`handleunmount`, subscriber, subscribersSelectors);
 
   if (subscriber) {
     if (subscriber.count > 0) {
@@ -94,13 +106,14 @@ function handleUnmountAtom (key: string): boolean {
 };
 
 /**
- * Looks up keys of dependencides for select and, for each of those dependencies (atoms or selectors),
+ * Looks up keys of dependencides for selector and, for each of those dependencies (atoms or selectors),
  * calls mount() or unmount() function depending on @type parameter
  */
-function handleSelector(key: string,  type: "mount" | "unmount" = `mount`): boolean {
+const handleSelector = (
+  key: string,
+  type: `mount` | `unmount` = `mount`
+): boolean => {
   const dependencies = subscribersSelectors.get(key);
-
-  //   console.warn(`handleSelector`, dependencies, subscribersAtoms);
 
   if (dependencies) {
     dependencies.forEach((dependencyKey) => {
@@ -131,25 +144,24 @@ type Atom = <T>(
 /**
  * Wrapper over Recoil atom that allows, in addition to default atom options,
  * to pass mount and unmount functions. Mount and unmount functions are given setSelf parameter
- * and new AtomSubscriber entry is created and stored.
+ * and stored in newly created AtomSubscriber.
  */
-export function effectAtom <T>({
+export const effectsAtom = <T>({
   mount,
   unmount,
   effects = [],
   ...options
-}: EffectAtomOptions<T>) {
+}: EffectsAtomOptions<T>) => {
   return (_r.atom as Atom)<T>({
     ...options,
+    // eslint-disable-next-line @typescript-eslint/camelcase
     effects_UNSTABLE: [
       ({ setSelf }) => {
         subscribersAtoms.set(options.key, {
           mount: () => mount(setSelf),
-          unmount: () => unmount(setSelf),
+          unmount: () => unmount?.(setSelf),
           count: 0,
         });
-
-        // console.warn(`effect`, subscribersAtoms);
       },
       ...effects,
     ],
@@ -163,14 +175,14 @@ export function effectAtom <T>({
 
  Documentation: https://recoiljs.org/docs/api-reference/core/selector
  */
-export function effectSelector<T>(
+export function effectsSelector<T>(
   options: _r.ReadWriteSelectorOptions<T>
 ): _r.RecoilState<T>;
-export function effectSelector<T>(
+export function effectsSelector<T>(
   options: _r.ReadOnlySelectorOptions<T>
 ): _r.RecoilValueReadOnly<T>;
 
-export function effectSelector<T>({
+export function effectsSelector<T>({
   get,
   ...selectorOptions
 }: _r.ReadOnlySelectorOptions<T> | _r.ReadWriteSelectorOptions<T>) {
@@ -197,9 +209,10 @@ export function effectSelector<T>({
 }
 
 /**
- * Hook that calls mount/unmount for specific key (regardless if atom or selector)
+ * Hook that calls mount for a given atom/selector after component is mounted
+ * and unmount just before component unmounting
  */
-function useRecoilEffect (key: string) {
+const useRecoilEffects = (key: string) => {
   React.useEffect(() => {
     // if atom with @key is not found, try to find selector
     if (!handleMountAtom(key)) {
@@ -221,21 +234,21 @@ function useRecoilEffect (key: string) {
 /**
  * Wrapper over useRecoilState that calls lifecycle methods
  */
-export function useRecoilEffectState <T>(
+export const useRecoilEffectsState = <T>(
   state: _r.RecoilState<T>
-): [T, _r.SetterOrUpdater<T>] {
+): [T, _r.SetterOrUpdater<T>] => {
   const stateArray = _r.useRecoilState(state);
-  useRecoilEffect(state.key);
+  useRecoilEffects(state.key);
   return stateArray;
 };
 
 /**
  * Wrapper over useRecoilEffectValue that calls lifecycle methods
  */
-export function useRecoilEffectValue <T>(
+export const useRecoilEffectsValue = <T>(
   state: _r.RecoilState<T> | _r.RecoilValueReadOnly<T>
-): T {
+): T => {
   const value = _r.useRecoilValue(state);
-  useRecoilEffect(state.key);
+  useRecoilEffects(state.key);
   return value;
 };
